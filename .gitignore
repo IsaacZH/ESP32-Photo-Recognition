@@ -1,0 +1,42 @@
+# 忽略 Python 编译的文件
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.swp
+
+# 忽略虚拟环境文件夹
+venv/
+env/
+*.env
+*.venv
+
+# 忽略配置文件
+*.log
+*.sqlite3
+
+# 忽略 Flask 的临时文件
+instance/
+*.db
+
+# 忽略 IDE 和编辑器配置文件
+.vscode/
+.idea/
+
+# 忽略 ESP32 的固件文件
+*.bin
+*.elf
+*.eap
+*.hex
+
+# 忽略生成的日志文件
+*.log
+
+# 忽略 OS 文件系统产生的文件
+.DS_Store
+Thumbs.db
+
+# 忽略用于测试或调试的临时文件
+*.bak
+*.swp
