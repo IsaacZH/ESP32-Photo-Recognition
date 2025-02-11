@@ -19,8 +19,8 @@ def parse_response(response_text):
     for line in lines:
         if ":" not in line:
             continue
-        item, count = line.split(":").strip()
-        item_count[item] = int(count)
+        item, count = line.split(":")
+        item_count[item.strip()] = int(count.strip())
     
     return item_count
 
