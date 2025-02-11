@@ -2,19 +2,36 @@ import network
 import time
 from logger import Logger
 logger = Logger(filename="app.log", level="INFO", min_level="INFO")
-def parse_response(response_text):
+
+def parse_response(response_text):    
+    """
+    解析服务器响应文本，将其转换为字典格式。
+
+    参数：
+    response_text (str): 服务器响应的文本。
+
+    返回：
+    dict: 包含项目及其计数的字典。
+    """
     item_count = {}
     lines = response_text.strip().split("\n")
     
     for line in lines:
-        item, count = line.split(": ")
+        if ":" not in line:
+            continue
+        item, count = line.split(":").strip()
         item_count[item] = int(count)
     
     return item_count
 
+
+
 logger.debug("Starting the application...")
 
-# 连接到 WiFi
+###########################################################
+#################      连接到WI-FI       ##################
+###########################################################
+
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 wlan.connect('Isaac_Desktop', 'zhou@jiahui')
@@ -28,7 +45,9 @@ logger.info('Connected to WiFi:', wlan.ifconfig())
 import urequests
 import json
 
-# 替换为你的服务器 IP 地址
+###########################################################
+#################       服务器请求        ##################
+###########################################################
 url = "http://192.168.137.1:5000/test"
 
 data = {
