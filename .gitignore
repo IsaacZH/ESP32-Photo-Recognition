@@ -19,4 +19,5 @@ CMakeLists.txt.user
 .DS_Store
 # 忽略所有的 .log 文件
 *.log
-
+# ignore ./flask/images
+/flask/images/*
