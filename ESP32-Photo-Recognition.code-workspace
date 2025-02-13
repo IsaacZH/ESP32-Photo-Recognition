@@ -1,12 +1,12 @@
 {
 	"folders": [
 		{
-			"name": "Photo-Recognition",
 			"path": "."
 		},
 		{
 			"name": "serial:/COM8",
 			"uri": "serial://com8/"
 		}
-	]
+	],
+	"settings": {}
 }
