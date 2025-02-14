@@ -24,14 +24,11 @@ def upload():
     # 获取请求的二进制数据
     data = request.data
     
-    # 返回响应
-    response = jsonify({"response": "Data received successfully!"})
-    
     # 在返回响应后打印数据并保存到本地文件
     # 将数据转换为十六进制字符串
     hex_data = data.hex()
     print("Received data (hex):", hex_data[:200])
-    
+    print("\n")
     # 确保 images 文件夹存在
     if not os.path.exists('images'):
         os.makedirs('images')
@@ -40,10 +37,11 @@ def upload():
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     file_path = os.path.join('images', f"received_image_{timestamp}.jpg")
     
+    # file_path = os.path.join('images', "received_image.jpg")
+
     # 将数据保存为 JPEG 文件
     with open(file_path, "wb") as f:
         f.write(data)
-    # convert to base64
 
     image_url = f"data:image/{os.path.splitext(file_path)[1]};base64,{base64.b64encode(data).decode('utf-8')}"
 
@@ -73,7 +71,7 @@ def upload():
     response_text = completion.choices[0].message.content 
     print(response_text)
      
-    return response
+    return response_text
 
 if __name__ == '__main__':
     app.run(host='192.168.137.1', port=5000)

@@ -94,43 +94,6 @@ static void event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-static void http_test_task(void *pvParameters)
-{
-    esp_http_client_config_t config = {
-        .url = "http://192.168.137.1:5000/upload",
-        .method = HTTP_METHOD_POST,
-    };
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-
-    // 准备要上传的文件内容
-    const char *post_data = "This is a test file content";
-    esp_http_client_set_post_field(client, post_data, strlen(post_data));
-    esp_http_client_set_header(client, "Content-Type", "application/octet-stream");
-
-    esp_err_t err = esp_http_client_perform(client);
-
-    if (err == ESP_OK) {
-        ESP_LOGI(TAG, "HTTP POST Status = %d, content_length = %lld",
-                 esp_http_client_get_status_code(client),
-                 esp_http_client_get_content_length(client));
-        // 输出服务器响应内容
-        char buffer[1024];
-        int content_length = esp_http_client_read(client, buffer, sizeof(buffer));
-        if (content_length >= 0) {
-            ESP_LOGI(TAG, "Response length: %d", content_length);
-            buffer[content_length] = '\0';
-            ESP_LOGI(TAG, "Response info: %s", buffer);
-        } else {
-            ESP_LOGE(TAG, "Failed to read response");
-        }
-    } else {
-        ESP_LOGE(TAG, "HTTP POST request failed: %s", esp_err_to_name(err));
-    }
-
-    esp_http_client_cleanup(client);
-    vTaskDelete(NULL);
-}
-
 void wifi_init_sta(void)
 {
     s_wifi_event_group = xEventGroupCreate();
@@ -184,12 +147,10 @@ void wifi_init_sta(void)
             pdFALSE,
             portMAX_DELAY);
 
-    /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
-     * happened. */
+
     if (bits & WIFI_CONNECTED_BIT) {
         ESP_LOGI(TAG, "connected to ap SSID:%s password:%s",
                  EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
-        // xTaskCreate(&http_test_task, "http_test_task", 4096, NULL, 5, NULL);
     } else if (bits & WIFI_FAIL_BIT) {
         ESP_LOGI(TAG, "Failed to connect to SSID:%s, password:%s",
                  EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
@@ -198,11 +159,39 @@ void wifi_init_sta(void)
     }
 }
 
+static esp_err_t http_event_handler(esp_http_client_event_t *evt) {
+    static char *buffer = NULL;      // Buffer to accumulate data
+    static int total_len = 0;        // Total length of data received
+
+    switch (evt->event_id) {
+        case HTTP_EVENT_ON_DATA:
+            // Resize buffer and append new data
+            buffer = realloc(buffer, total_len + evt->data_len + 1);
+            memcpy(buffer + total_len, evt->data, evt->data_len);
+            total_len += evt->data_len;
+            buffer[total_len] = '\0'; // Null-terminate
+            break;
+
+        case HTTP_EVENT_ON_FINISH:
+            // Process the full response here
+            ESP_LOGI(TAG, "Full response: \n%s", buffer);
+            free(buffer);
+            total_len = 0;
+            break;
+
+        default:
+            break;
+    }
+    return ESP_OK;
+}
+
 void http_post(const char *post_data, size_t data_len)
 {
+    ESP_LOGI(TAG, "HTTP POST data length: %d", data_len);
     esp_http_client_config_t config = {
         .url = "http://192.168.137.1:5000/upload",
         .method = HTTP_METHOD_POST,
+        .event_handler = http_event_handler,
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
