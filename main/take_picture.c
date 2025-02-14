@@ -13,10 +13,6 @@
 #endif
 
 #include "esp_camera.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "nvs_flash.h"
-#include "esp_http_client.h"
 #include "wifi_sta.h"
 
 #define CAM_PIN_PWDN 32
@@ -37,7 +33,9 @@
 #define CAM_PIN_HREF 23
 #define CAM_PIN_PCLK 22
 
-static const char *TAG = "example:take_picture";
+#define BLINK_GPIO 4
+
+static const char *TAG = "take_picture";
 
 #if ESP_CAMERA_SUPPORTED
 static camera_config_t camera_config = {
@@ -87,6 +85,28 @@ static esp_err_t init_camera(void)
 }
 #endif
 
+#ifdef BLINK_GPIO
+#include "driver/gpio.h"
+
+static void flash_led_task(void *pvParameters)
+{
+    /* Set the GPIO level according to the state (LOW or HIGH)*/
+    gpio_set_level(BLINK_GPIO, 1);
+    ESP_LOGI(TAG, "Turning the LED ON");
+    vTaskDelay(500 / portTICK_RATE_MS);   
+    gpio_set_level(BLINK_GPIO, 0);
+    ESP_LOGI(TAG, "Turning the LED OFF");
+    vTaskDelete(NULL);
+}
+
+static void led_init(void)
+{
+    ESP_LOGI(TAG, "configured to blink GPIO LED!");
+    gpio_reset_pin(BLINK_GPIO);
+    /* Set the GPIO as a push/pull output */
+    gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
+}
+#endif
 
 void app_main(void)
 {
@@ -99,13 +119,17 @@ void app_main(void)
     ESP_ERROR_CHECK(ret);
 
     wifi_init_sta();
+    led_init();
 
 #if ESP_CAMERA_SUPPORTED
     if(ESP_OK != init_camera()) {
         return;
     }
     
-    // ESP_LOGI(TAG, "Taking picture...");
+    ESP_LOGI(TAG, "Taking picture...");
+    #ifdef BLINK_GPIO
+    xTaskCreate(&flash_led_task, "flash_led_task", 4096, NULL, 5, NULL);
+    #endif
     camera_fb_t *pic = esp_camera_fb_get();
 
     // use pic->buf to access the image
