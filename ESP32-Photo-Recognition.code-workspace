@@ -2,16 +2,14 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "C:/Users/18129/esp/v5.4/esp-idf"
 		}
 	],
 	"settings": {
 		"files.associations": {
 			"string.h": "c",
 			"esp_wifi.h": "c",
-			"esp_event.h": "c"
+			"esp_event.h": "c",
+			"gpio.h": "c"
 		}
 	}
 }

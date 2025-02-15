@@ -33,7 +33,8 @@
 #define CAM_PIN_HREF 23
 #define CAM_PIN_PCLK 22
 
-#define BLINK_GPIO 4
+// #define BLINK_GPIO 4
+#define EN_POST_IMAGE
 
 static const char *TAG = "take_picture";
 
@@ -66,7 +67,7 @@ static camera_config_t camera_config = {
     .frame_size = FRAMESIZE_QXGA,    //QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates.
 
     .jpeg_quality = 3, //0-63, for OV series camera sensors, lower number means higher quality
-    .fb_count = 1,       //When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
+    .fb_count = 5,       //When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
     .fb_location = CAMERA_FB_IN_PSRAM,
     .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
 };
@@ -118,30 +119,38 @@ void app_main(void)
     }
     ESP_ERROR_CHECK(ret);
 
+    #ifdef EN_POST_IMAGE
     wifi_init_sta();
+    #endif
+    #ifdef BLINK_GPIO
     led_init();
-
+    #endif
 #if ESP_CAMERA_SUPPORTED
     if(ESP_OK != init_camera()) {
         return;
     }
+    for (int i = 0; i < 10; i++)
+    {
+        ESP_LOGI(TAG, "Taking picture...");
+        #ifdef BLINK_GPIO
+        xTaskCreate(&flash_led_task, "flash_led_task", 4096, NULL, 5, NULL);
+        #endif
+        camera_fb_t *pic = esp_camera_fb_get();
+        // LOG size, format, height and width
+        ESP_LOGI(TAG, "Picture taken! Size: %zu bytes, Format: %d, Width: %d, Height: %d", pic->len, pic->format, pic->width, pic->height);
+        ESP_LOG_BUFFER_HEX(TAG, pic->buf, MIN(32, pic->len));
+        #ifdef EN_POST_IMAGE
+        // http_post((const char *)pic->buf, pic->len);
+        #endif
+        
+        vTaskDelay(1 / portTICK_RATE_MS);
+        if (i % camera_config.fb_count == 0)
+        {
+            ESP_LOGI(TAG, "esp_camera_return_all");
+            esp_camera_return_all();
+        }
+    }
     
-    ESP_LOGI(TAG, "Taking picture...");
-    #ifdef BLINK_GPIO
-    xTaskCreate(&flash_led_task, "flash_led_task", 4096, NULL, 5, NULL);
-    #endif
-    camera_fb_t *pic = esp_camera_fb_get();
-
-    // use pic->buf to access the image
-
-    // Print the buffer content in hex format
-    ESP_LOGI(TAG, "Picture taken! Its size was: %zu bytes", pic->len);
-    // log front 50 bytes
-    ESP_LOG_BUFFER_HEX(TAG, pic->buf, MIN(50, pic->len));
-    http_post((const char *)pic->buf, pic->len);
-    esp_camera_fb_return(pic);
-
-    // vTaskDelay(5000 / portTICK_RATE_MS);
 #else
     ESP_LOGE(TAG, "Camera support is not available for this chip");
     return;
