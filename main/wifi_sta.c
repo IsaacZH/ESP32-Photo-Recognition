@@ -210,6 +210,7 @@ void http_post(const char *post_data, size_t data_len)
     ESP_LOGI(TAG, "HTTP POST data length: %d", data_len);
     esp_http_client_config_t config = {
         .url = "http://192.168.137.1:5000/upload",
+        // .url = "http://192.168.43.4:5000/upload",
         .method = HTTP_METHOD_POST,
         .event_handler = http_event_handler,
     };

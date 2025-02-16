@@ -64,10 +64,10 @@ static camera_config_t camera_config = {
     .ledc_channel = LEDC_CHANNEL_0,
 
     .pixel_format = PIXFORMAT_JPEG, //YUV422,GRAYSCALE,RGB565,JPEG
-    .frame_size = FRAMESIZE_QXGA,    //QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates.
+    .frame_size = FRAMESIZE_HD,    //QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates.
 
     .jpeg_quality = 3, //0-63, for OV series camera sensors, lower number means higher quality
-    .fb_count = 5,       //When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
+    .fb_count = 10,       //When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
     .fb_location = CAMERA_FB_IN_PSRAM,
     .grab_mode = CAMERA_GRAB_WHEN_EMPTY,
 };
@@ -131,7 +131,7 @@ void app_main(void)
     if(ESP_OK != init_camera()) {
         return;
     }
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 1000000; i++)
     {
         ESP_LOGI(TAG, "Taking picture...");
         #ifdef BLINK_GPIO

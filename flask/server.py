@@ -34,10 +34,10 @@ def upload():
         os.makedirs('images')
     
     # 使用当前时间戳作为文件名
-    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    file_path = os.path.join('images', f"received_image_{timestamp}.jpg")
+    # timestamp = datetime.datetime.now().strftime("%Y%m%d_%H_%M_%S_%f")
+    # file_path = os.path.join('images', f"image_{timestamp}.jpg")
     
-    # file_path = os.path.join('images', "received_image.jpg")
+    file_path = os.path.join('images', "received_image.jpg")
 
     # 将数据保存为 JPEG 文件
     with open(file_path, "wb") as f:
@@ -75,3 +75,4 @@ def upload():
 
 if __name__ == '__main__':
     app.run(host='192.168.137.1', port=5000)
+    # app.run(host='192.168.43.4', port=5000)
