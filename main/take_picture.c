@@ -109,6 +109,8 @@ static void led_init(void)
 }
 #endif
 
+// void http_post(camera_fb_t *pic, const char *post_data, size_t data_len);
+
 void app_main(void)
 {
     // Initialize NVS
@@ -140,11 +142,9 @@ void app_main(void)
         ESP_LOGI(TAG, "Picture taken! Size: %zu bytes, Format: %d, Width: %d, Height: %d", pic->len, pic->format, pic->width, pic->height);
         ESP_LOG_BUFFER_HEX(TAG, pic->buf, MIN(32, pic->len));
         #ifdef EN_POST_IMAGE
-        // http_post((const char *)pic->buf, pic->len);
+        http_post((const char *)pic->buf, pic->len);
         #endif
-        
-        vTaskDelay(1 / portTICK_RATE_MS);
-        if (i % camera_config.fb_count == 0)
+        if ((i+1) % camera_config.fb_count == 0)
         {
             ESP_LOGI(TAG, "esp_camera_return_all");
             esp_camera_return_all();

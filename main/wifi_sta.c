@@ -165,18 +165,38 @@ static esp_err_t http_event_handler(esp_http_client_event_t *evt) {
 
     switch (evt->event_id) {
         case HTTP_EVENT_ON_DATA:
-            // Resize buffer and append new data
-            buffer = realloc(buffer, total_len + evt->data_len + 1);
-            memcpy(buffer + total_len, evt->data, evt->data_len);
-            total_len += evt->data_len;
-            buffer[total_len] = '\0'; // Null-terminate
+            if (evt->data_len > 0) {
+                char *new_buffer = realloc(buffer, total_len + evt->data_len + 1);
+                if (new_buffer == NULL) {
+                    ESP_LOGE(TAG, "Failed to allocate memory for buffer");
+                    free(buffer);
+                    buffer = NULL;
+                    total_len = 0;
+                    return ESP_FAIL;
+                }
+                buffer = new_buffer;
+                memcpy(buffer + total_len, evt->data, evt->data_len);
+                total_len += evt->data_len;
+                buffer[total_len] = '\0'; // Null-terminate
+            }
             break;
 
         case HTTP_EVENT_ON_FINISH:
-            // Process the full response here
-            ESP_LOGI(TAG, "Full response: \n%s", buffer);
-            free(buffer);
-            total_len = 0;
+            if (buffer) {
+                // Process the full response here
+                ESP_LOGI(TAG, "Full response: \n%s", buffer);
+                free(buffer);
+                buffer = NULL;
+                total_len = 0;
+            }
+            break;
+
+        case HTTP_EVENT_ERROR:
+            if (buffer) {
+                free(buffer);
+                buffer = NULL;
+                total_len = 0;
+            }
             break;
 
         default:

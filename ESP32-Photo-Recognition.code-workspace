@@ -9,7 +9,10 @@
 			"string.h": "c",
 			"esp_wifi.h": "c",
 			"esp_event.h": "c",
-			"gpio.h": "c"
+			"gpio.h": "c",
+			"freertos.h": "c",
+			"esp_system.h": "c",
+			"wifi_sta.h": "c"
 		}
 	}
 }
