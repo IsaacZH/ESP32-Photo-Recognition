@@ -205,9 +205,18 @@ static esp_err_t http_event_handler(esp_http_client_event_t *evt) {
     return ESP_OK;
 }
 
-void http_post(const char *post_data, size_t data_len)
+typedef struct {
+    const char *post_data;
+    size_t data_len;
+} http_post_params_t;
+
+static int post_finished = 1;
+void http_post_task(void *pvParameters)
 {
-    ESP_LOGI(TAG, "HTTP POST data length: %d", data_len);
+    post_finished = 0;
+    http_post_params_t *params = (http_post_params_t *)pvParameters;
+
+    ESP_LOGI(TAG, "HTTP POST data length: %d", params->data_len);
     esp_http_client_config_t config = {
         .url = "http://192.168.137.1:5000/upload",
         // .url = "http://192.168.43.4:5000/upload",
@@ -217,7 +226,7 @@ void http_post(const char *post_data, size_t data_len)
     esp_http_client_handle_t client = esp_http_client_init(&config);
 
     // ready to upload file content
-    esp_http_client_set_post_field(client, post_data, data_len);
+    esp_http_client_set_post_field(client, params->post_data, params->data_len);
     esp_http_client_set_header(client, "Content-Type", "image/jpeg");
 
     esp_err_t err = esp_http_client_perform(client);
@@ -231,4 +240,29 @@ void http_post(const char *post_data, size_t data_len)
     }
 
     esp_http_client_cleanup(client);
+    free(params); // Free the allocated memory for parameters
+    post_finished = 1;
+    vTaskDelete(NULL); // Delete the task when done
+}
+
+int http_post(const char *post_data, size_t data_len)
+{
+    if (post_finished != 1)
+    {
+        return -1;
+    }
+    // Allocate memory for parameters
+    http_post_params_t *params = (http_post_params_t *)malloc(sizeof(http_post_params_t));
+    if (params == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for HTTP POST parameters");
+        return 0;
+    }
+
+    // Set parameters
+    params->post_data = post_data;
+    params->data_len = data_len;
+
+    // Create a task to perform the HTTP POST
+    xTaskCreate(&http_post_task, "http_post_task", 8192, (void *)params, 5, NULL);
+    return 1;
 }

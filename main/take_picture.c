@@ -59,12 +59,12 @@ static camera_config_t camera_config = {
     .pin_pclk = CAM_PIN_PCLK,
 
     //XCLK 20MHz or 10MHz for OV2640 double FPS (Experimental)
-    .xclk_freq_hz = 20000000,
+    .xclk_freq_hz = 10000000,
     .ledc_timer = LEDC_TIMER_0,
     .ledc_channel = LEDC_CHANNEL_0,
 
     .pixel_format = PIXFORMAT_JPEG, //YUV422,GRAYSCALE,RGB565,JPEG
-    .frame_size = FRAMESIZE_HD,    //QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates.
+    .frame_size = FRAMESIZE_SVGA,    //QQVGA-UXGA, For ESP32, do not use sizes above QVGA when not JPEG. The performance of the ESP32-S series has improved a lot, but JPEG mode always gives better frame rates.
 
     .jpeg_quality = 3, //0-63, for OV series camera sensors, lower number means higher quality
     .fb_count = 10,       //When jpeg mode is used, if fb_count more than one, the driver will work in continuous mode.
@@ -142,13 +142,14 @@ void app_main(void)
         ESP_LOGI(TAG, "Picture taken! Size: %zu bytes, Format: %d, Width: %d, Height: %d", pic->len, pic->format, pic->width, pic->height);
         ESP_LOG_BUFFER_HEX(TAG, pic->buf, MIN(32, pic->len));
         #ifdef EN_POST_IMAGE
-        http_post((const char *)pic->buf, pic->len);
+        while(http_post((const char *)pic->buf, pic->len)!=1);
         #endif
         if ((i+1) % camera_config.fb_count == 0)
         {
             ESP_LOGI(TAG, "esp_camera_return_all");
             esp_camera_return_all();
         }
+        // vTaskDelay(200 / portTICK_RATE_MS); 
     }
     
 #else
